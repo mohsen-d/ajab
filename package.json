@@ -1,0 +1,35 @@
+{
+  "name": "ajab",
+  "version": "1.0.0",
+  "description": "ajab makes modules' private functions reachable for testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --silent=false"
+  },
+  "keywords": [
+    "unit test",
+    "testing",
+    "private"
+  ],
+  "files": [
+    "LICENSE",
+    "Readme.md",
+    "index.js"
+  ],
+  "author": {
+    "name": "Mohsen Dorparasti",
+    "email": "dorparasti@gmail.com"
+  },
+  "homepage": "https://github.com/mohsen-d/ajab",
+  "bugs": {
+    "url": "https://github.com/mohsen-d/ajab/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohsen-d/ajab.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^28.1.1"
+  }
+}
