@@ -8,5 +8,7 @@ function areNumbers(a, b) {
 }
 
 const areInRange = function (a, b) {
-  return a > 0 && a < 100 && b > 0 && b < 100;
+  return isInRange(a) && isInRange(b);
 };
+
+const isInRange = (v) => v > 0 && v < 100;

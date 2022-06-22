@@ -8,3 +8,11 @@ test("normal exported function should work fine", () => {
 test("private function declaration should work fine", () => {
   expect(sampleModule.areNumbers(1, 2)).toBe(true);
 });
+
+test("private function expression should work fine", () => {
+  expect(sampleModule.areInRange(1, 2)).toBe(true);
+});
+
+test("private arrow should work fine", () => {
+  expect(sampleModule.isInRange(50)).toBe(true);
+});
