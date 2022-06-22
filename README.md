@@ -1,6 +1,6 @@
 # ajab
 
-ajab enables developers to test their modules' private functions.
+ajab makes modules' private (not-exported) functions reachable and testable in testing frameworks like jest
 
 ## installing
 
@@ -8,7 +8,7 @@ install `ajab` by running `npm i ajab` in terminal
 
 ## using
 
-If `myModule.js` contains the following:
+Imagine `myModule.js` contains the following:
 
     module.exports.publicFunction = function publicFunction(a, b){
         return a + b;
@@ -18,12 +18,16 @@ If `myModule.js` contains the following:
         return a * b;
     }
 
-instead of `require`, import your module using `ajab` :
+    const anotherPrivateFunction = (a, b) => {
+        return a / b;
+    }
+
+To test the private functions, in your tests, instead of `require`, import your module using `ajab` :
 
     const ajab = required('ajab');
     const myModule = ajab('./myModule');
 
-This way your private functions will be available just like an exported function:
+`ajab` makes your private functions available just like an exported function so you can test them directly:
 
     // in jest:
     test("My private function should be testable", () => {
