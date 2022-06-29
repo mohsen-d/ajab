@@ -1,44 +1,49 @@
-const fs = require("fs");
-const { resolve } = require("path");
+const Module = require("module");
 
 module.exports = function (modulePath) {
-  const moduleFullPath = resolveThePath(modulePath);
-  const moduleContent = fs.readFileSync(moduleFullPath, "utf8");
+  const moduleFullPath = Module._resolveFilename(modulePath, require.main);
 
-  const exportingPrivateFunctionsCodeBlock =
-    exportPrivateFunctions(moduleContent);
-  const finalContent = moduleContent + exportingPrivateFunctionsCodeBlock;
-  eval(finalContent);
-  return module.exports;
+  const originalPrefix = Module.wrapper[0];
+  const originalSuffix = Module.wrapper[1];
+
+  const prefix = `let mf = function xxx(){`;
+  const suffix = `} 
+               ${codeToExportPrivateFuncs()}
+  `;
+
+  Module.wrapper[0] = Module.wrapper[0] + prefix;
+  Module.wrapper[1] = suffix + Module.wrapper[1];
+
+  const targetModule = new Module(moduleFullPath, require.main);
+  targetModule.load(targetModule.id);
+
+  Module.wrapper[0] = originalPrefix;
+  Module.wrapper[1] = originalSuffix;
+
+  return targetModule.exports;
 };
 
-function resolveThePath(path) {
-  let fullPath = resolve(path);
-  if (!fullPath.endsWith(".js")) fullPath += ".js";
-  return fullPath;
-}
+function codeToExportPrivateFuncs() {
+  return `
+  let mc = mf.toString();
+  mc = mc.replace("function xxx(){", "");
+  mc = mc.substring(0, mc.lastIndexOf("}"));
 
-function exportPrivateFunctions(moduleContent) {
-  // find functions defined by function declaration
-  let exportCodeBlock = buildExportCodeBlock(
-    moduleContent,
-    /^function\s+(\w+)(?=\s*\()/gm
-  );
-
-  // find functions defined by function expression or arrow functions
-  exportCodeBlock += buildExportCodeBlock(
-    moduleContent,
-    /^(?:const|let|var)\s*(\S+)\s*=\s*(?:function|\()/gm
-  );
-
-  return exportCodeBlock;
-}
-
-function buildExportCodeBlock(moduleContent, regex) {
-  let matches = [...moduleContent.matchAll(regex)];
   let exportCodeBlock = "";
+
+  let regex = /^function\\s+(\\w+)(?=\\s*\\()/gm;
+  let matches = [...mc.matchAll(regex)];
   for (const match of matches) {
-    exportCodeBlock += `module.exports.${match[1]} = ${match[1]}; \r\n`;
+    exportCodeBlock += \`module.exports.\$\{match[1]\} = \$\{match[1]\};\`;
   }
-  return exportCodeBlock;
+
+  regex = /^(?:const|let|var)\\s*(\\S+)\\s*=\\s*(?:function|\\()/gm;
+  matches = [...mc.matchAll(regex)];
+  for (const match of matches) {
+    exportCodeBlock += \`module.exports.\$\{match[1]\} = \$\{match[1]\};\`;
+  }
+
+  mc = mc + exportCodeBlock;
+
+  return eval(mc);`;
 }
