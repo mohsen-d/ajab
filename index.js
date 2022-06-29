@@ -1,10 +1,12 @@
 const Module = require("module");
 
+let originalPrefix = Module.wrapper[0];
+let originalSuffix = Module.wrapper[1];
+let currentModule;
+let nodeRequire;
+
 module.exports = function (modulePath) {
   const moduleFullPath = Module._resolveFilename(modulePath, require.main);
-
-  const originalPrefix = Module.wrapper[0];
-  const originalSuffix = Module.wrapper[1];
 
   const prefix = `let mf = function xxx(){`;
   const suffix = `} 
@@ -15,10 +17,14 @@ module.exports = function (modulePath) {
   Module.wrapper[1] = suffix + Module.wrapper[1];
 
   const targetModule = new Module(moduleFullPath, require.main);
+
+  nodeRequire = require;
+  targetModule.require = requireProxy;
+  currentModule = targetModule;
+
   targetModule.load(targetModule.id);
 
-  Module.wrapper[0] = originalPrefix;
-  Module.wrapper[1] = originalSuffix;
+  reset();
 
   return targetModule.exports;
 };
@@ -45,5 +51,15 @@ function codeToExportPrivateFuncs() {
 
   mc = mc + exportCodeBlock;
 
-  return eval(mc);`;
+  eval(mc);`;
+}
+
+function reset() {
+  Module.wrapper[0] = originalPrefix;
+  Module.wrapper[1] = originalSuffix;
+}
+function requireProxy(path) {
+  reset();
+  currentModule.require = nodeRequire;
+  return nodeRequire.call(currentModule, path);
 }
