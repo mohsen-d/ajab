@@ -1,20 +1,22 @@
 const path = require("path");
 
-module.exports.sum = function sum(a, b) {
+const isInRange = (v) => v > 0 && v < 100;
+
+function sum(a, b) {
+  const areInRange = function (a, b) {
+    return isInRange(a) && isInRange(b);
+  };
+
+  function getPath() {
+    return path.resolve("./sample.js");
+  }
+
   if (areNumbers(a, b) && areInRange(a, b)) return a + b;
   return 0;
-};
+}
 
 function areNumbers(a, b) {
-  return !isNaN(a) && !isNaN(b);
+  return !isNaN(a) && !isNaN(b) && isInRange(a);
 }
 
-function getPath() {
-  return path.resolve("./sample.js");
-}
-
-const areInRange = function (a, b) {
-  return isInRange(a) && isInRange(b);
-};
-
-const isInRange = (v) => v > 0 && v < 100;
+module.exports.sum = sum;
