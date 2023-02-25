@@ -50,18 +50,22 @@ function codeToExportPrivateFuncs() {
   \`;
   
   let exportCodeBlock_suffix = \`\r\n
-    const originalExports = module.exports;
-    module.exports = {
-      public: originalExports
-    };
+
+    if(typeof module.exports !== "object"){
+      const originalExports = module.exports;
+      module.exports = {
+        public: originalExports
+      };
+    } 
+
+    const toBeExported = module.exports;
 
     for (const funcName in funcs) {
       if (typeof funcs[funcName] === "function") {
         funcs[funcName]();
-        module.exports[funcName] = funcs[funcName];
+        if(!toBeExported[funcName]) toBeExported[funcName] = funcs[funcName];
       }
     }
-
 
     ajabIsManipulating = false;
 
