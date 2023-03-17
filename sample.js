@@ -2,7 +2,7 @@ const path = require("path");
 
 const isInRange = (v) => v > 0 && v < 100;
 
-function sum(a, b) {
+module.exports.sum = function (a, b) {
   const areInRange = function (a, b) {
     return isInRange(a) && isInRange(b);
   };
@@ -13,10 +13,8 @@ function sum(a, b) {
 
   if (areNumbers(a, b) && areInRange(a, b)) return a + b;
   return 0;
-}
+};
 
 function areNumbers(a, b) {
   return !isNaN(a) && !isNaN(b) && isInRange(a);
 }
-
-module.exports.sum = sum;

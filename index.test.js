@@ -15,7 +15,6 @@ describe("module.exports is an object", () => {
     expect(sampleModule.areNumbers(1, 2)).toBe(true);
   });
   test("private function expression should work fine", () => {
-    console.log(sampleModule.areInRange.toString());
     expect(sampleModule.areInRange(1, 2)).toBe(true);
   });
   test("private arrow should work fine", () => {

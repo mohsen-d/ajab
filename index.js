@@ -40,7 +40,7 @@ function codeToExportPrivateFuncs() {
     const extractFuncs = function () {
       let output = "";
       for (const funcName in funcs) {
-        if (typeof funcs[funcName] !== "function") {
+        if (funcs[funcName] !== "exported" && typeof funcs[funcName] !== "function") {
           output += \\\` if(typeof \\\${funcName} === "function") funcs['\\\${funcName}'] = \\\${funcName};\\\`;
         }
       }
@@ -60,12 +60,33 @@ function codeToExportPrivateFuncs() {
 
     const toBeExported = module.exports;
 
-    for (const funcName in funcs) {
-      if (typeof funcs[funcName] === "function") {
-        funcs[funcName]();
-        if(!toBeExported[funcName]) toBeExported[funcName] = funcs[funcName];
+    function thereIsNotExportedFunc(){
+      return Object.entries(funcs).some(([f, d]) => d !== "exported");
+    }
+
+    function notExportedFunc(){
+      return Object.fromEntries(Object.entries(funcs).filter(([f, d]) => d !== "exported"));
+    }
+
+
+    while(thereIsNotExportedFunc()){
+      const notExportedFuncs = notExportedFunc();
+
+      for (const funcName in notExportedFuncs) {
+        if (typeof funcs[funcName] === "function") {
+          funcs[funcName]();
+          toBeExported[funcName] = funcs[funcName];
+          funcs[funcName] = "exported";
+        }
+        else if(typeof toBeExported[funcName] === "function"){
+          toBeExported[funcName]();
+          funcs[funcName] = "exported";
+        }
       }
     }
+
+    console.log(module.exports);
+    console.log(exports);
 
     ajabIsManipulating = false;
 
@@ -81,12 +102,29 @@ function codeToExportPrivateFuncs() {
   });
 
   
-  regex = /\\s*(?:const|let|var)\\s*([^\\s\\=]+)\\s*=\\s*(?:function)*\\s*(?:\\()*([^\\)\\(\\=]*)(?:\\))*\\s*(?:=>)*\\s*\\{/gm;
-  moduleContent = moduleContent.replace(regex, function(match, p1, p2){
+  regex = /([^\\=\\:\\n]+(?!\\.))\\s*(?:\\:|\\=)\\s*(?:function)*((?:(?<=function)\\s+[^\\(\\)\\s]+)*)\\s*(?:\\()*([^\\)\\(\\=]*)(?:\\))*\\s*(?:=>)*\\s*\\{/gm
+  moduleContent = moduleContent.replace(regex, function(match, p1, p2, p3){
+    if(p1.includes("exports"))
+    {
+      p1 = p1.trim();
+      if(p1 === "module.exports") p1 = "public";
+
+      p1 = p1.replace(/(module|exports|\\.)/g, "");
+
+      exportCodeBlock_prefix += \`funcs.\${p1} = eval("typeof \${p1} !== 'undefined'") ? \${p1} : undefined;\`;
+
+      return \`
+      \${match}
+      if(ajabIsManipulating) return eval(extractFuncs());\`;
+    }
+
+    p1 = p1.replace(/(const|let|var)/, "");
+    p1 = p1.trim();
+
     exportCodeBlock_prefix += \`funcs.\${p1} = eval("typeof \${p1} !== 'undefined'") ? \${p1} : undefined;\`;
 
      return \`
-     function \${p1} (\${p2}){
+     function \${p1} (\${p3}){
       if(ajabIsManipulating) return eval(extractFuncs());\`;
   });
 
@@ -98,7 +136,7 @@ function codeToExportPrivateFuncs() {
   });
 
   moduleContent =  exportCodeBlock_prefix + moduleContent + exportCodeBlock_suffix;
-  // console.log(moduleContent);
+  //console.log(moduleContent);
   eval(moduleContent);`;
 }
 
@@ -106,6 +144,7 @@ function reset() {
   Module.wrapper[0] = originalPrefix;
   Module.wrapper[1] = originalSuffix;
 }
+
 function requireProxy(path) {
   reset();
   currentModule.require = nodeRequire;
